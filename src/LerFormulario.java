@@ -1,5 +1,7 @@
 import java.io.*;
 import java.util.Scanner;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 public class LerFormulario {
 
@@ -112,7 +114,71 @@ public class LerFormulario {
             System.out.println("Não foi possível ler o formulario.txt");
             e.printStackTrace();
         }
+
+        salvarPetEmArquivo(pet);
         return pet;
+
     }
+    private void salvarPetEmArquivo(Pet pet) throws PetException {
+        File pasta = new File("petsCadastrados");
+        if (!pasta.exists() && !pasta.mkdirs()){
+            throw new PetException("Não foi possível criar a pasta petsCadastrados!");
+        }
+        String dataCerta = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmm"));
+
+        String nomeParte = pet.getNomeCompleto().trim().toUpperCase().replaceAll("\\s+", "");
+
+        String nomeArquivo = dataCerta + "-" + nomeParte + ".TXT";
+        File arquivo = new File(pasta, nomeArquivo);
+
+        try (BufferedWriter bw = new BufferedWriter(new FileWriter(arquivo))) {
+
+            bw.write("1 - " + validacao(pet.getNomeCompleto()));
+            bw.newLine();
+
+            bw.write("2 - " + enumBonito(pet.getTipo()));
+            bw.newLine();
+
+            bw.write("3 - " + enumBonito(pet.getSexo()));
+            bw.newLine();
+
+            Endereco e = pet.getEndereco();
+            String enderecoLinha;
+            if (e == null) {
+                enderecoLinha = Pet.NAO_INFORMADO;
+            } else {
+                enderecoLinha = validacao(e.getRua()) + ", " + validacao(e.getNumeroEndereco()) + ", " + validacao(e.getCidade());
+            }
+            bw.write("4 - " + enderecoLinha);
+            bw.newLine();
+
+            String idade = (pet.getIdade() == null) ? Pet.NAO_INFORMADO : (pet.getIdade() + " anos");
+            bw.write("5 - " + idade);
+            bw.newLine();
+
+            String peso = (pet.getPesoKg() == null) ? Pet.NAO_INFORMADO : (pet.getPesoKg() + "kg");
+            bw.write("6 - " + peso);
+            bw.newLine();
+
+            bw.write("7 - " + validacao(pet.getRaca()));
+            bw.newLine();
+
+        } catch (IOException ex) {
+            throw new PetException("Erro ao salvar arquivo do pet: " + ex.getMessage());
+        }
+    }
+
+    private String validacao(String s) {
+        return (s == null || s.isBlank()) ? Pet.NAO_INFORMADO : s.trim();
+    }
+
+    private String enumBonito(Enum<?> e) {
+        if (e == null) return Pet.NAO_INFORMADO;
+        String nome = e.name().toLowerCase();
+        return nome.substring(0, 1).toUpperCase() + nome.substring(1);
+    }
+
+
+
 
 }
